@@ -1,108 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Score Tracker</title>
 
 <style>
+/* ----------------------- */
+/* CSS STYLES        */
+/* ----------------------- */
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: white;
     background: linear-gradient(135deg, #5a0066, #c4007a);
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
+/* Header */
 header {
     padding: 20px;
     font-size: 24px;
     font-weight: bold;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.container {
-    padding: 20px;
-}
-
-.card {
-    background: rgba(255,255,255,0.08);
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 10px;
+#backBtn {
+    margin-right: 15px;
+    font-size: 28px;
+    padding: 0 10px;
     cursor: pointer;
 }
 
+/* Layout */
+.container {
+    padding: 20px;
+    padding-bottom: 80px; /* Space for FAB */
+}
+
+/* Cards */
+.card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.1s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card:active {
+    transform: scale(0.98);
+    background: rgba(255,255,255,0.2);
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.card-meta {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Floating Action Button */
 button.plus {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    font-size: 26px;
-    width: 45px;
-    height: 45px;
+    bottom: 30px;
+    right: 30px;
+    font-size: 32px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     border: none;
     background: white;
     color: #c4007a;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
 }
 
+button.plus:active {
+    transform: scale(0.9);
+}
+
+/* Inputs & Forms */
 input, textarea {
     width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 6px;
+    padding: 15px;
+    margin: 8px 0;
+    border-radius: 8px;
     border: none;
+    font-size: 16px;
+    box-sizing: border-box;
+    font-family: inherit;
 }
 
-/* keyboard UI */
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
 
+/* Custom Keyboard */
 .keyboard-wrap {
     display: flex;
     justify-content: center;
     margin-top: 20px;
+    width: 100%; /* FIX: Forces container to take full width */
 }
 
 .keyboard {
-    width: 260px;
+    width: 100%;
+    max-width: 320px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
 }
 
 .key {
-    padding: 18px 0;
-    font-size: 22px;
+    padding: 20px 0;
+    font-size: 24px;
     border: none;
-    border-radius: 14px;
+    border-radius: 12px;
     background: rgba(255,255,255,0.15);
     color: white;
     cursor: pointer;
-    transition: 0.15s;
+    user-select: none;
+    touch-action: manipulation;
 }
 
-.key:active {
-    transform: scale(0.95);
-}
-
+.key:active { background: rgba(255,255,255,0.3); }
 .key.tick { background: #007bff; }
 .key.cancel { background: #e53935; }
+.key.mic { background: #00c853; }
+.key.mic.listening { background: #ffeb3b; color: black; animation: pulse 1s infinite; }
 
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Dialog/Modal */
 .dialog {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.8);
     display: none;
     justify-content: center;
     align-items: center;
+    z-index: 50;
+    padding: 20px;
 }
 
 .dialog-box {
-    background: #5a0066;
-    padding: 20px;
-    border-radius: 12px;
-    width: 300px;
+    background: linear-gradient(135deg, #5a0066, #800055);
+    padding: 25px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 350px;
+    border: 1px solid rgba(255,255,255,0.2);
 }
-.key.mic {
-    background: #00c853;
+
+.dialog-btn {
+    width: 100%;
+    padding: 15px;
+    background: white;
+    color: #800055;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 15px;
+    cursor: pointer;
 }
+
+/* Helper classes */
+.hidden { display: none !important; }
+.text-center { text-align: center; }
 
 </style>
 </head>
@@ -110,51 +199,443 @@ input, textarea {
 <body>
 
 <header>
-<span id="backBtn" onclick="goBack()" style="cursor:pointer;display:none;margin-right:10px;">←</span>
-<span id="title">Classes</span>
+    <div id="backBtn" class="hidden" onclick="goBack()">&#8592;</div>
+    <span id="title">Classes</span>
+
+    <div style="margin-left:auto; font-size:12px; opacity:0.5; cursor:pointer;" onclick="resetData()">
+        Reset
+    </div>
 </header>
 
 <div class="container" id="content"></div>
 
-<button class="plus" onclick="openDialog()">+</button>
+<button class="plus" id="fab" onclick="handleFab()">+</button>
 
 <div class="dialog" id="dialog">
-<div class="dialog-box">
-<div id="dialogContent"></div>
-<button onclick="submitDialog()">Save</button>
-</div>
+    <div class="dialog-box">
+        <div id="dialogContent"></div>
+        <button class="dialog-btn" onclick="submitDialog()">Save</button>
+        <button class="dialog-btn" style="background:transparent; color:white; margin-top:5px; padding:10px;" onclick="closeDialog()">Cancel</button>
+    </div>
 </div>
 
 <script>
 
-const API = "http://localhost:5000";
+// ---------------------------
+// 1. DATA STORAGE
+// ---------------------------
+
+const DB_KEY = "school_tracker_v1";
+
+let db = {
+    classes: [],
+    tests: [],
+    scores: []
+};
+
+function initDB() {
+    const saved = localStorage.getItem(DB_KEY);
+    if (saved) {
+        db = JSON.parse(saved);
+    } else {
+        saveDB();
+    }
+}
+
+function saveDB() {
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+function resetData() {
+    if(confirm("Delete all data and reset?")) {
+        localStorage.removeItem(DB_KEY);
+        location.reload();
+    }
+}
+
+// ---------------------------
+// 2. STATE MANAGEMENT
+// ---------------------------
 
 let state = {
     screen: "classes",
     selectedClass: null,
     selectedTest: null,
-    selectedSubject: null
+    selectedSubject: null,
+    entryList: [],
+    entryIndex: 0
 };
 
-let scoreData = [];
-let currentIndex = 0;
+// ---------------------------
+// 3. NAVIGATION & VIEWS
+// ---------------------------
 
-function fetchJSON(url, options={}) {
-    return fetch(API + url, options).then(r => r.json());
-}
+function updateHeader() {
+    const back = document.getElementById("backBtn");
+    const title = document.getElementById("title");
+    const fab = document.getElementById("fab");
 
-function updateBackButton() {
-    document.getElementById("backBtn").style.display =
-        state.screen === "classes" ? "none" : "inline";
+    back.classList.remove("hidden");
+    fab.classList.remove("hidden");
+
+    if (state.screen === "classes") {
+        back.classList.add("hidden");
+        title.innerText = "Classes";
+    } else if (state.screen === "tests") {
+        title.innerText = state.selectedClass;
+    } else if (state.screen === "subjects") {
+        title.innerText = state.selectedTest;
+        fab.classList.add("hidden");
+    } else if (state.screen === "scores") {
+        title.innerText = state.selectedSubject;
+    } else if (state.screen === "entry") {
+        title.innerText = "Enter Marks";
+        fab.classList.add("hidden");
+    }
 }
 
 function goBack() {
-    if(state.screen === "scores") loadSubjects(state.selectedTest);
-    else if(state.screen === "subjects") loadTests(state.selectedClass);
-    else if(state.screen === "tests") loadClasses();
+    if (state.screen === "entry") loadScores(state.selectedSubject);
+    else if (state.screen === "scores") loadSubjects(state.selectedTest);
+    else if (state.screen === "subjects") loadTests(state.selectedClass);
+    else if (state.screen === "tests") loadClasses();
 }
 
-function openDialog(html="") {
+// --- VIEW: CLASSES ---
+
+function loadClasses() {
+    state.screen = "classes";
+    updateHeader();
+
+    const content = document.getElementById("content");
+    content.innerHTML = "";
+
+    if (db.classes.length === 0) {
+        content.innerHTML = `<div class="text-center" style="opacity:0.6; margin-top:50px;">No classes found.<br>Click + to add.</div>`;
+        return;
+    }
+
+    db.classes.forEach(cls => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+            <span class="card-title">${cls.name}</span>
+            <span class="card-meta">${cls.students.length} Students</span>
+        `;
+        div.onclick = () => loadTests(cls.name);
+        content.appendChild(div);
+    });
+}
+
+// --- VIEW: TESTS ---
+
+function loadTests(className) {
+    state.screen = "tests";
+    state.selectedClass = className;
+    updateHeader();
+
+    const content = document.getElementById("content");
+    content.innerHTML = "";
+
+    const classTests = db.tests.filter(t => t.className === className);
+
+    if (classTests.length === 0) {
+        content.innerHTML = `<div class="text-center" style="opacity:0.6; margin-top:50px;">No tests created.<br>Click + to add a test.</div>`;
+        return;
+    }
+
+    classTests.forEach(test => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<span class="card-title">${test.name}</span>`;
+        div.onclick = () => loadSubjects(test.name);
+        content.appendChild(div);
+    });
+}
+
+// --- VIEW: SUBJECTS ---
+
+function loadSubjects(testName) {
+    state.screen = "subjects";
+    state.selectedTest = testName;
+    updateHeader();
+
+    const subjects = ["English", "Urdu", "Math", "Pak Study", "Nazra", "Biology", "Computer", "Physics", "Chemistry", "Islamiat"];
+
+    const content = document.getElementById("content");
+    content.innerHTML = "";
+
+    subjects.forEach(sub => {
+        const count = db.scores.filter(s =>
+            s.className === state.selectedClass &&
+            s.test === state.selectedTest &&
+            s.subject === sub
+        ).length;
+
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+            <span class="card-title">${sub}</span>
+            <span class="card-meta">${count > 0 ? count + ' marked' : ''}</span>
+        `;
+        div.onclick = () => loadScores(sub);
+        content.appendChild(div);
+    });
+}
+
+// --- VIEW: SCORES LIST ---
+
+function loadScores(subject) {
+    state.screen = "scores";
+    state.selectedSubject = subject;
+    updateHeader();
+
+    const content = document.getElementById("content");
+    content.innerHTML = "";
+
+    const clsObj = db.classes.find(c => c.name === state.selectedClass);
+    const students = clsObj ? clsObj.students : [];
+
+    const scoreList = students.map(studentName => {
+        const existing = db.scores.find(s =>
+            s.className === state.selectedClass &&
+            s.test === state.selectedTest &&
+            s.subject === state.selectedSubject &&
+            s.student === studentName
+        );
+        return {
+            student: studentName,
+            score: existing ? existing.score : null
+        };
+    });
+
+    const hasScores = scoreList.some(s => s.score !== null);
+
+    if (hasScores) {
+        scoreList.forEach(row => {
+            const div = document.createElement("div");
+            div.className = "card";
+            const scoreDisplay = row.score !== null
+                ? `<b style="font-size:20px; color:#00ff88;">${row.score}</b>`
+                : `<span style="opacity:0.3">-</span>`;
+
+            div.innerHTML = `<span>${row.student}</span> ${scoreDisplay}`;
+            div.onclick = () => startEntryMode(scoreList, scoreList.indexOf(row));
+            content.appendChild(div);
+        });
+
+        const btn = document.createElement("button");
+        btn.className = "dialog-btn";
+        btn.style.marginTop = "20px";
+        btn.innerText = "Enter / Edit Scores";
+        btn.onclick = () => startEntryMode(scoreList, 0);
+        content.appendChild(btn);
+
+    } else {
+        startEntryMode(scoreList, 0);
+    }
+}
+
+// --- VIEW: SCORE ENTRY (KEYBOARD) ---
+
+function startEntryMode(list, startIndex) {
+    state.screen = "entry";
+    state.entryList = list;
+    state.entryIndex = startIndex;
+    updateHeader();
+    showEntryCard();
+}
+
+function showEntryCard() {
+    const content = document.getElementById("content");
+    content.innerHTML = "";
+
+    if (state.entryIndex >= state.entryList.length) {
+        content.innerHTML = `
+            <div class="text-center" style="margin-top:50px;">
+                <h2>All Done! ✅</h2>
+                <p>Marks saved to mobile storage.</p>
+                <button class="dialog-btn" onclick="loadScores(state.selectedSubject)">View List</button>
+            </div>
+        `;
+        return;
+    }
+
+    const current = state.entryList[state.entryIndex];
+
+    const div = document.createElement("div");
+    div.className = "card";
+    // We override styles here for the entry view
+    div.style.flexDirection = "column";
+    div.style.background = "rgba(0,0,0,0.2)";
+    div.style.alignItems = "center"; // Center text and input
+
+    div.innerHTML = `
+        <div style="font-size:14px; opacity:0.7; margin-bottom:5px;">Student ${state.entryIndex + 1} / ${state.entryList.length}</div>
+        <h1 style="margin:0; font-size:32px; text-align:center;">${current.student}</h1>
+
+        <input id="scoreInput" type="text" readonly
+            value="${current.score || ""}"
+            placeholder="-"
+            style="
+                font-size: 48px;
+                text-align: center;
+                width: 150px;
+                background: white;
+                color: #333;
+                font-weight: bold;
+                margin: 20px auto;
+                display: block;
+            ">
+
+        <div class="keyboard-wrap">
+            <div id="keyboard" class="keyboard"></div>
+        </div>
+    `;
+
+    content.appendChild(div);
+    buildKeyboard();
+}
+
+function buildKeyboard() {
+    const kb = document.getElementById("keyboard");
+    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "🎤", "0", "✓", "❌", "Skip"];
+
+    keys.forEach(k => {
+        const btn = document.createElement("button");
+        btn.className = "key";
+
+        if (k === "✓") btn.classList.add("tick");
+        else if (k === "❌") btn.classList.add("cancel");
+        else if (k === "🎤") btn.classList.add("mic");
+        else if (k === "Skip") {
+            btn.style.gridColumn = "1 / -1";
+            btn.style.fontSize = "18px";
+            btn.style.padding = "10px";
+        }
+
+        btn.innerText = k;
+        btn.onclick = (e) => handleKey(k, e.target);
+        kb.appendChild(btn);
+    });
+}
+
+function handleKey(key, btnElem) {
+    const input = document.getElementById("scoreInput");
+
+    if (key === "Skip") {
+        nextStudent();
+        return;
+    }
+
+    if (key === "❌") {
+        input.value = "";
+        return;
+    }
+
+    if (key === "✓") {
+        saveScore(input.value);
+        return;
+    }
+
+    if (key === "🎤") {
+        startDictation(btnElem);
+        return;
+    }
+
+    if (input.value.length < 3) {
+        input.value += key;
+    }
+}
+
+// ---------------------------
+// 4. LOGIC & ACTIONS
+// ---------------------------
+
+function saveScore(scoreVal) {
+    const currentStudent = state.entryList[state.entryIndex].student;
+
+    db.scores = db.scores.filter(s =>
+        !(s.className === state.selectedClass &&
+          s.test === state.selectedTest &&
+          s.subject === state.selectedSubject &&
+          s.student === currentStudent)
+    );
+
+    if (scoreVal.trim() !== "") {
+        db.scores.push({
+            className: state.selectedClass,
+            test: state.selectedTest,
+            subject: state.selectedSubject,
+            student: currentStudent,
+            score: scoreVal
+        });
+    }
+
+    saveDB();
+    state.entryList[state.entryIndex].score = scoreVal;
+    nextStudent();
+}
+
+function nextStudent() {
+    state.entryIndex++;
+    showEntryCard();
+}
+
+function startDictation(btn) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("Voice not supported on this browser.");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+
+    btn.classList.add("listening");
+
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        const number = text.match(/\d+/);
+        if (number) {
+            document.getElementById("scoreInput").value = number[0];
+        }
+        btn.classList.remove("listening");
+    };
+
+    recognition.onerror = () => {
+        btn.classList.remove("listening");
+        alert("Did not catch that.");
+    };
+
+    recognition.onend = () => {
+        btn.classList.remove("listening");
+    };
+
+    recognition.start();
+}
+
+// ---------------------------
+// 5. DIALOGS & FORMS
+// ---------------------------
+
+function handleFab() {
+    if (state.screen === "classes") {
+        openDialog(`
+            <h3>New Class</h3>
+            <input id="newClassName" placeholder="Class Name (e.g. 9th Green)">
+            <textarea id="newStudents" placeholder="Paste Student Names&#10;(One per line)"></textarea>
+        `);
+    } else if (state.screen === "tests") {
+        openDialog(`
+            <h3>New Test</h3>
+            <input id="newTestName" placeholder="Test Name (e.g. Monthly)">
+        `);
+    }
+}
+
+function openDialog(html) {
     document.getElementById("dialogContent").innerHTML = html;
     document.getElementById("dialog").style.display = "flex";
 }
@@ -164,255 +645,38 @@ function closeDialog() {
 }
 
 function submitDialog() {
-    if(state.screen === "classes") {
-        const name = document.getElementById("className").value;
-        const students = document.getElementById("students").value.split("\n");
+    if (state.screen === "classes") {
+        const name = document.getElementById("newClassName").value.trim();
+        const studentsRaw = document.getElementById("newStudents").value;
 
-        fetchJSON("/classes", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({name,students})
-        }).then(loadClasses);
+        if(!name) return alert("Class Name required");
+
+        const students = studentsRaw.split("\n").map(s => s.trim()).filter(s => s);
+
+        if(db.classes.find(c => c.name === name)) {
+            return alert("Class name already exists!");
+        }
+
+        db.classes.push({ name, students });
+        saveDB();
+        loadClasses();
     }
+    else if (state.screen === "tests") {
+        const name = document.getElementById("newTestName").value.trim();
+        if(!name) return alert("Test Name required");
 
-    if(state.screen === "tests") {
-        const name = document.getElementById("testName").value;
-
-        fetchJSON("/tests", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({class:state.selectedClass,name})
-        }).then(loadTests);
+        db.tests.push({
+            className: state.selectedClass,
+            name: name
+        });
+        saveDB();
+        loadTests(state.selectedClass);
     }
 
     closeDialog();
 }
 
-document.querySelector(".plus").onclick = () => {
-    if(state.screen === "classes") {
-        openDialog(`
-        <h3>New Class</h3>
-        <input id="className" placeholder="Class Name">
-        <textarea id="students" placeholder="One student per line"></textarea>
-        `);
-    }
-
-    if(state.screen === "tests") {
-        openDialog(`
-        <h3>New Test</h3>
-        <input id="testName" placeholder="Test Name">
-        `);
-    }
-};
-
-function loadClasses() {
-    state.screen="classes";
-    updateBackButton();
-    document.getElementById("title").innerText="Classes";
-
-    fetchJSON("/classes").then(data=>{
-        const c=document.getElementById("content");
-        c.innerHTML="";
-        data.forEach(cls=>{
-            const div=document.createElement("div");
-            div.className="card";
-            div.innerText=cls;
-            div.onclick=()=>loadTests(cls);
-            c.appendChild(div);
-        });
-    });
-}
-
-function loadTests(cls) {
-    state.screen="tests";
-    state.selectedClass=cls;
-    updateBackButton();
-    document.getElementById("title").innerText=cls+" - Tests";
-
-    fetchJSON("/tests/"+cls).then(data=>{
-        const c=document.getElementById("content");
-        c.innerHTML="";
-        data.forEach(test=>{
-            const div=document.createElement("div");
-            div.className="card";
-            div.innerText=test;
-            div.onclick=()=>loadSubjects(test);
-            c.appendChild(div);
-        });
-    });
-}
-
-function loadSubjects(test) {
-    state.screen="subjects";
-    state.selectedTest=test;
-    updateBackButton();
-    document.getElementById("title").innerText=test+" - Subjects";
-
-    const subjects=["English","Urdu","Math","Pak Study","Nazra","Biology", "Computer","Physics","Chemistry"];
-    const c=document.getElementById("content");
-    c.innerHTML="";
-    subjects.forEach(sub=>{
-        const div=document.createElement("div");
-        div.className="card";
-        div.innerText=sub;
-        div.onclick=()=>loadScores(sub);
-        c.appendChild(div);
-    });
-}
-
-function loadScores(subject) {
-    state.screen="scores";
-    state.selectedSubject=subject;
-    updateBackButton();
-    document.getElementById("title").innerText=subject+" Scores";
-
-    fetchJSON(`/scores/${state.selectedClass}/${state.selectedTest}/${subject}`)
-    .then(data=>{
-
-        const hasScores = data.some(row=>row.score!==null);
-
-        // list mode
-        if(hasScores){
-            const c=document.getElementById("content");
-            c.innerHTML="";
-            data.forEach(row=>{
-                const div=document.createElement("div");
-                div.className="card";
-                div.innerHTML=`<b>${row.student}</b> : ${row.score ?? "-"}`;
-                c.appendChild(div);
-            });
-            return;
-        }
-
-        // keyboard mode
-        scoreData=data;
-        currentIndex=0;
-        showStudent();
-    });
-}
-
-function showStudent(){
-    const c=document.getElementById("content");
-    c.innerHTML="";
-
-    if(!scoreData || scoreData.length===0){
-        c.innerHTML="<h2 style='text-align:center'>No students</h2>";
-        return;
-    }
-
-    if(currentIndex>=scoreData.length){
-        c.innerHTML="<h2 style='text-align:center'>All marks entered ✅</h2>";
-        return;
-    }
-
-    const row=scoreData[currentIndex];
-
-    const div=document.createElement("div");
-    div.className="card";
-    div.style.textAlign="center";
-
-    div.innerHTML=`
-    <h2>${row.student}</h2>
-    <input id="scoreInput" type="text" readonly
-    value="${row.score || ""}"
-    style="font-size:32px;text-align:center;width:120px;margin:10px auto;display:block;">
-    <div class="keyboard-wrap">
-        <div id="keyboard" class="keyboard"></div>
-    </div>
-    `;
-
-    c.appendChild(div);
-    buildKeyboard();
-}
-
-function buildKeyboard(){
-    const kb=document.getElementById("keyboard");
-    kb.innerHTML="";
-
-    const keys=[
-        "1","2","3",
-        "4","5","6",
-        "7","8","9",
-        "🎤","0","✓",
-        "❌"
-    ];
-
-    keys.forEach(k=>{
-        const btn=document.createElement("button");
-        btn.className="key";
-
-        if(k==="✓") btn.classList.add("tick");
-        if(k==="❌") btn.classList.add("cancel");
-        if(k==="🎤") btn.classList.add("mic");
-
-        btn.innerText=k;
-        btn.onclick=()=>keyPress(k);
-
-        kb.appendChild(btn);
-    });
-}
-
-function startMic(){
-    const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if(!SpeechRecognition){
-        alert("Speech recognition not supported");
-        return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.start();
-
-    recognition.onresult = (event)=>{
-        const text = event.results[0][0].transcript;
-        const number = text.match(/\d+/);
-
-        if(number){
-            document.getElementById("scoreInput").value = number[0];
-        }
-    };
-
-    recognition.onerror = ()=>alert("Mic error");
-}
-
-
-function keyPress(key){
-    const input=document.getElementById("scoreInput");
-
-    if(key==="❌"){ input.value=""; return; }
-
-    if(key==="✓"){ saveCurrent(); return; }
-
-    if(key==="🎤"){ startMic(); return; }
-
-    if(input.value.length<3) input.value+=key;
-}
-
-
-function saveCurrent(){
-    if(!scoreData[currentIndex]) return;
-
-    const score=document.getElementById("scoreInput").value;
-    const student=scoreData[currentIndex].student;
-
-    fetchJSON("/scores",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            class:state.selectedClass,
-            test:state.selectedTest,
-            subject:state.selectedSubject,
-            student,
-            score
-        })
-    }).then(()=>{
-        currentIndex++;
-        showStudent();
-    });
-}
-
+initDB();
 loadClasses();
 
 </script>
